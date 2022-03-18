@@ -1,13 +1,19 @@
-var builder = WebApplication.CreateBuilder(args);
+using Microsoft.EntityFrameworkCore;
+using MinimalAPI.Data;
+using Microsoft.EntityFrameworkCore.Design;
+using MinimalAPI.Models;
+using MiniValidation;
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddDbContext<MinimalContextDb>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -16,28 +22,43 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.MapGet("/fornecedor", async (
+     MinimalContextDb context) =>
+ await context.Fornecedores.ToListAsync())
+    .WithName("GetFornecedor")
+    .WithTags("Fornecedor");
 
-app.MapGet("/weatherforecast", () =>
+app.MapGet("/fornecedor/{id}", async (
+     Guid id,
+     MinimalContextDb context) =>
+await context.Fornecedores.FindAsync(id)
+        is Fornecedor fornecedor
+            ? Results.Ok(fornecedor)
+            : Results.NotFound())
+    .Produces<Fornecedor>(StatusCodes.Status200OK)
+    .Produces(StatusCodes.Status404NotFound)
+    .WithName("GetFornecedorPorId")
+    .WithTags("Fornecedor");
+
+app.MapPost("/fornecedor", async (
+    MinimalContextDb context, Fornecedor fornecedor) =>
 {
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-       new WeatherForecast
-       (
-           DateTime.Now.AddDays(index),
-           Random.Shared.Next(-20, 55),
-           summaries[Random.Shared.Next(summaries.Length)]
-       ))
-        .ToArray();
-    return forecast;
+    if (!MiniValidator.TryValidate(fornecedor, out var errors))
+        return Results.ValidationProblem(errors);
+
+    context.Fornecedores.Add(fornecedor);
+    var result = await context.SaveChangesAsync();
+    return result > 0
+    //? Results.Created($"/fornecedor/{fornecedor.Id}", fornecedor)
+    ? Results.CreatedAtRoute("GetFornecedorPorId", new { id = fornecedor.Id }, fornecedor)
+    : Results.BadRequest("Houve um problema ao salvar o registro");
+
 })
-.WithName("GetWeatherForecast");
+    .ProducesValidationProblem()
+    .Produces<Fornecedor>(StatusCodes.Status201Created)
+    .Produces(StatusCodes.Status400BadRequest)
+    .WithName("PostFornecedor")
+    .WithTags("Fornecedor"); 
 
 app.Run();
 
-internal record WeatherForecast(DateTime Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
