@@ -12,7 +12,7 @@
 
 - [x] Cadastro de Fornecedor
 - [x] Consulta de Fornecedor
-- [ ] Delet de Fornecedor
+- [ ] Delete de Fornecedor
 - [ ] Update de Fornecedor
 - [ ] Authentication / Authorization
 - [ ] JWT
