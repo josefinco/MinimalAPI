@@ -62,6 +62,10 @@
               "target": "Package",
               "version": "[0.4.2-pre.20220306.48, )"
             },
+            "NetDevPack.Identity": {
+              "target": "Package",
+              "version": "[6.0.5, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.2.3, )"
