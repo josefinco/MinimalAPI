@@ -1,18 +1,21 @@
 # MinimalAPI Asp.net
 
 ## Estudo de MinimalAPI em Asp.net
+### CRUD api utilizando o formato Minimal ASP.NET 6
 
-<p align="center">CRUD api utilizando o formato Minimal e SqlServer Context</p>
+ - [x] Jwt (.NET DevPack)
+ - [x] Entity Framework (SqlServer)
 
-<h4 align="center"> 
-	🚧  React Select 🚀 Em construção...  🚧
-</h4>
 
 ### Features
 
-- [x] Cadastro de Fornecedor
-- [x] Consulta de Fornecedor
-- [ ] Delete de Fornecedor
-- [ ] Update de Fornecedor
-- [ ] Authentication / Authorization
-- [ ] JWT
+- :white_check_mark:  Cadastro de Fornecedor
+- :white_check_mark:  Consulta de Fornecedor
+- :white_check_mark:  Delete de Fornecedor
+- :white_check_mark:  Update de Fornecedor
+- :white_check_mark:  Authentication / Authorization
+- :white_check_mark:  JWT
+
+<h1 align="center"> 
+ 🚀 Done... :tada:
+</h1>
