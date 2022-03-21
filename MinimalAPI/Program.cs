@@ -9,6 +9,7 @@ using NetDevPack.Identity.Jwt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using NetDevPack.Identity.Model;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
@@ -25,6 +26,16 @@ builder.Services.AddIdentityEntityFrameworkContextConfiguration(options =>
 builder.Services.AddIdentityConfiguration();
 builder.Services.AddJwtConfiguration(builder.Configuration, "AppSettings"); //Adiciona a configuração do JWT pegando a key "AppSettings dentro do appsettings.json//
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("ExcluirFornecedor",
+        policy => policy.RequireClaim("ExcluirFornecedor"));
+    options.AddPolicy("AdicionarFornecedor",
+        policy => policy.RequireClaim("AdicionarFornecedor"));
+    options.AddPolicy("AtualizarFornecedor",
+    policy => policy.RequireClaim("AtualizarFornecedor"));
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -40,7 +51,7 @@ app.UseHttpsRedirection();
 
 // \/ AUTH API
 
-app.MapPost("/registro", async (
+app.MapPost("/registro", [AllowAnonymous] async (
         SignInManager<IdentityUser> signInManager,
         UserManager<IdentityUser> userManager,
         IOptions<AppJwtSettings> appJwtSettings,
@@ -81,7 +92,7 @@ app.MapPost("/registro", async (
     .WithTags("Usuario");
 
 
-app.MapPost("/login", async(
+app.MapPost("/login", [AllowAnonymous] async(
          SignInManager < IdentityUser > signInManager,
          UserManager < IdentityUser > userManager,
          IOptions < AppJwtSettings > appJwtSettings,
@@ -121,7 +132,7 @@ app.MapPost("/login", async(
 
 // \/ CRUD APIS
 
-app.MapGet("/fornecedor", async (
+app.MapGet("/fornecedor", [AllowAnonymous] async (
      MinimalContextDb context) =>
  await context.Fornecedores.ToListAsync())
     .WithName("GetFornecedor")
@@ -139,7 +150,7 @@ await context.Fornecedores.FindAsync(id)
     .WithName("GetFornecedorPorId")
     .WithTags("Fornecedor");
 
-app.MapPost("/fornecedor", async (
+app.MapPost("/fornecedor", [Authorize] async (
     MinimalContextDb context, Fornecedor fornecedor) =>
 {
     if (!MiniValidator.TryValidate(fornecedor, out var errors))
@@ -156,11 +167,12 @@ app.MapPost("/fornecedor", async (
     .ProducesValidationProblem()
     .Produces<Fornecedor>(StatusCodes.Status201Created)
     .Produces(StatusCodes.Status400BadRequest)
+    .RequireAuthorization("AdicionarFornecedor")
     .WithName("PostFornecedor")
     .WithTags("Fornecedor");
 
 
-app.MapPut("/fornecedor/{id}", async (
+app.MapPut("/fornecedor/{id}", [Authorize] async (
     Guid id,
     MinimalContextDb context, 
     Fornecedor fornecedor) =>
@@ -184,11 +196,12 @@ app.MapPut("/fornecedor/{id}", async (
     .ProducesValidationProblem()
     .Produces(StatusCodes.Status204NoContent)
     .Produces(StatusCodes.Status400BadRequest)
+    .RequireAuthorization("AtualizarFornecedor")
     .WithName("PuFornecedor")
     .WithTags("Fornecedor");
 
 
-app.MapDelete("/fornecedor/{id}", async (
+app.MapDelete("/fornecedor/{id}", [Authorize] async (
     Guid id,
     MinimalContextDb context) =>
 {
@@ -207,9 +220,10 @@ app.MapDelete("/fornecedor/{id}", async (
         : Results.BadRequest("Houve um problema ao salvar o registro");
 
 })
-    .ProducesValidationProblem()
     .Produces(StatusCodes.Status204NoContent)
     .Produces(StatusCodes.Status400BadRequest)
+    .Produces(StatusCodes.Status404NotFound)
+    .RequireAuthorization("ExcluirFornecedor")
     .WithName("DeleteFornecedor")
     .WithTags("Fornecedor");
 
